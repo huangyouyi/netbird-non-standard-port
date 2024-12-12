@@ -111,7 +111,7 @@ wait_api() {
         echo ""
       fi
 
-      curl $FLAGS -k --fail --connect-timeout 1 -o /dev/null "$INSTANCE_URL/auth/v1/users/me" -H "Authorization: Bearer $PAT"
+      curl $FLAGS --fail --connect-timeout 1 -o /dev/null "$INSTANCE_URL/auth/v1/users/me" -H "Authorization: Bearer $PAT"
       if [[ $? -eq 0 ]]; then
         break
       fi
@@ -452,9 +452,9 @@ initEnvironment() {
     NETBIRD_DOMAIN=$(get_main_ip_address)
   else
     ZITADEL_EXTERNALSECURE="true"
-    ZITADEL_TLS_MODE="disabled"
+    ZITADEL_TLS_MODE="external"
     NETBIRD_PORT=2096
-    CADDY_SECURE_DOMAIN=", $NETBIRD_DOMAIN:$NETBIRD_PORT"
+    CADDY_SECURE_DOMAIN=", $NETBIRD_DOMAIN:443"
     NETBIRD_HTTP_PROTOCOL="https"
     NETBIRD_RELAY_PROTO="rels"
   fi
@@ -529,10 +529,10 @@ renderCaddyfile() {
   cat <<EOF
 {
   debug
-	servers :80 {
-    protocols h1 h2c
+	servers :80,:443 {
+    protocols h1 h2c h3
   }
-  auto_https off
+  acme_dns cloudflare {env.CLOUDFLARE_API_TOKEN}
 }
 
 (security_headers) {
@@ -784,10 +784,14 @@ version: "3.4"
 services:
   # Caddy reverse proxy
   caddy:
-    image: caddy
+    image: caddybuilds/caddy-cloudflare
     restart: unless-stopped
     networks: [ netbird ]
+    env_file:
+      - ./cloudflare.env
     ports:
+      - "2096:443"
+      - "2096:443/udp"
       - '2095:80'
       - '8080:8080'
     volumes:
