@@ -532,6 +532,7 @@ renderCaddyfile() {
 	servers :80,:443 {
     protocols h1 h2c h3
   }
+  acme_dns cloudflare {env.CLOUDFLARE_API_TOKEN}
 }
 
 (security_headers) {
@@ -550,7 +551,7 @@ renderCaddyfile() {
         # and ensure that the website is working properly before setting
         # to two years.
 
-        Strict-Transport-Security "max-age=3600; includeSubDomains; preload"
+        # Strict-Transport-Security "max-age=3600; includeSubDomains; preload"
 
         # disable clients from sniffing the media type
         # https://cheatsheetseries.owasp.org/cheatsheets/HTTP_Headers_Cheat_Sheet.html#x-content-type-options
@@ -783,9 +784,11 @@ version: "3.4"
 services:
   # Caddy reverse proxy
   caddy:
-    image: caddy
+    image: caddybuilds/caddy-cloudflare
     restart: unless-stopped
     networks: [ netbird ]
+    env_file:
+      - ./cloudflare.env
     ports:
       - "9443:443"
       - "9443:443/udp"
