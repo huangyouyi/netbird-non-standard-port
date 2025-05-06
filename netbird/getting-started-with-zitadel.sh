@@ -453,7 +453,7 @@ initEnvironment() {
   else
     ZITADEL_EXTERNALSECURE="true"
     ZITADEL_TLS_MODE="external"
-    NETBIRD_PORT=2096
+    NETBIRD_PORT=9443
     CADDY_SECURE_DOMAIN=", $NETBIRD_DOMAIN:443"
     NETBIRD_HTTP_PROTOCOL="https"
     NETBIRD_RELAY_PROTO="rels"
@@ -532,7 +532,6 @@ renderCaddyfile() {
 	servers :80,:443 {
     protocols h1 h2c h3
   }
-  acme_dns cloudflare {env.CLOUDFLARE_API_TOKEN}
 }
 
 (security_headers) {
@@ -551,7 +550,7 @@ renderCaddyfile() {
         # and ensure that the website is working properly before setting
         # to two years.
 
-        # Strict-Transport-Security "max-age=3600; includeSubDomains; preload"
+        Strict-Transport-Security "max-age=3600; includeSubDomains; preload"
 
         # disable clients from sniffing the media type
         # https://cheatsheetseries.owasp.org/cheatsheets/HTTP_Headers_Cheat_Sheet.html#x-content-type-options
@@ -710,7 +709,7 @@ AUTH_SUPPORTED_SCOPES="openid profile email offline_access"
 AUTH_REDIRECT_URI=/nb-auth
 AUTH_SILENT_REDIRECT_URI=/nb-silent-auth
 # SSL
-NGINX_SSL_PORT=2096
+NGINX_SSL_PORT=9443
 # Letsencrypt
 LETSENCRYPT_DOMAIN=none
 EOF
@@ -784,15 +783,13 @@ version: "3.4"
 services:
   # Caddy reverse proxy
   caddy:
-    image: caddybuilds/caddy-cloudflare
+    image: caddy
     restart: unless-stopped
     networks: [ netbird ]
-    env_file:
-      - ./cloudflare.env
     ports:
-      - "2096:443"
-      - "2096:443/udp"
-      - '2095:80'
+      - "9443:443"
+      - "9443:443/udp"
+      - '8080:80'
       - '8080:8080'
     volumes:
       - netbird_caddy_data:/data
