@@ -789,7 +789,7 @@ services:
     ports:
       - "9443:443"
       - "9443:443/udp"
-      - '8080:80'
+      - '9080:80'
       - '8080:8080'
     volumes:
       - netbird_caddy_data:/data
